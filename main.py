@@ -1,113 +1,95 @@
 import pygame, sys, time
 import pygame.time
+import random
 
 from settings import *
 from sprites import BG, Fish, Worm
-from pygame import mixer, math
-import random
-
-opcode              = 0 # general opcode
-operand             = 0 # general operand
-worm_ip             = 0 # pattern instruction pointer for worm
-worm_counter        = 0 # counter of pattern control
-worm_pattern_index  = 0 # the current pattern being executed
-
-opcode_names = {
-    OPC_E,
-    OPC_NE,
-    OPC_N,
-    OPC_NW,
-    OPC_W,
-    OPC_SW,
-    OPC_S,
-    OPC_SE,
-    OPC_STOP,
-    OPC_RAND,
-    OPC_TEST_DIST
-}
-
-pattern_1 = {
-    OPC_W, 10, OPC_NW, 10, OPC_N, 10, OPC_NE, 10,
-    OPC_TEST_DIST, 50, # a distance test
-    OPC_E, 10, OPC_SE, 10, OPC_S, 10, OPC_SW, 10,
-    OPC_W, 10, OPC_RAND, 10,
-    OPC_TEST_DIST, 50, # a distance test
-    OPC_W, 20, OPC_NW, 10, OPC_N, 20, OPC_NE, 10,
-    OPC_E, 20, OPC_SE, 10, OPC_S, 20, OPC_SW, 10,
-    OPC_TEST_DIST, 50, # a distance test
-    OPC_W, 10, OPC_END, 0
-}
-
-pattern_2 = {
-    OPC_E, 20, OPC_W, 20, OPC_STOP, 20, OPC_NE, 10,
-    OPC_TEST_DIST, 50, # a distance test
-    OPC_W, 10, OPC_NW, 10, OPC_SW, 20, OPC_NW, 20,
-    OPC_TEST_DIST, 50, # a distance test
-    OPC_SW, 20, OPC_NW, 30, OPC_SW, 10, OPC_S, 50,
-    OPC_TEST_DIST, 50, # a distance test
-    OPC_W, 2, OPC_NW, 2, OPC_N, 2, OPC_NE, 50 , OPC_TEST_DIST, 50, # a distance test
-    OPC_E, 2, OPC_SE, 2, OPC_S, 2, OPC_RAND, 10, OPC_END, 0
-}
-
-pattern_3 = {
-    OPC_N, 10, OPC_S, 10, OPC_N, 10, OPC_S, 10,
-    OPC_TEST_DIST, 50, # a distance test
-    OPC_E, 10, OPC_W, 10, OPC_E, 10, OPC_W, 10,
-    OPC_TEST_DIST, 50, # a distance test
-    OPC_NW, 10, OPC_N, 10, OPC_NE, 10, OPC_N, 10,
-    OPC_TEST_DIST, 60, # a distance test
-    OPC_STOP, 20, OPC_RAND, 5, OPC_E, 50, OPC_S, OPC_W, 50,
-    OPC_TEST_DIST, 50, # a distance test
-    OPC_E, 10, OPC_E, 10, OPC_E, 10, OPC_NW, 100, OPC_TEST_DIST, 60, # a distance test,
-    OPC_STOP, 10, OPC_END, 0
-}
-
-pattern_4 = {
-    OPC_W, 100,
-    OPC_NW, 2, OPC_N, 2, OPC_NE, 2,
-    OPC_E, 100,
-    OPC_NE, 2, OPC_N, 2, OPC_NW, 2,
-    OPC_TEST_DIST, 50, # a distance test
-    OPC_W, 100,
-    OPC_NW, 2, OPC_N, 2, OPC_NE, 2,
-    OPC_E, 100,
-    OPC_NE, 2, OPC_N, 2, OPC_NW, 2,
-    OPC_TEST_DIST, 50, # a distance test
-    OPC_W, 100,
-    OPC_NW, 2, OPC_N, 2, OPC_NE, 2,
-    OPC_E, 100,
-    OPC_NE, 2, OPC_N, 2, OPC_NW, 2,
-    OPC_TEST_DIST, 50, # a distance test
-    OPC_RAND, 10, OPC_RAND, 5,
-
-    OPC_SW, 2, OPC_S, 2, OPC_SE, 2,
-    OPC_E, 100,
-    OPC_TEST_DIST, 50, # a distance test
-    OPC_SE, 2, OPC_S, 2, OPC_SW, 2,
-    OPC_W, 100,
-    OPC_TEST_DIST, 50, # a distance test
-    OPC_SW, 2, OPC_S, 2, OPC_SE, 2,
-    OPC_E, 100,
-    OPC_SE, 2, OPC_S, 2, OPC_SW, 2,
-    OPC_W, 100,
-    OPC_TEST_DIST, 50, # a distance test
-    OPC_SW, 2, OPC_S, 2, OPC_SE, 2,
-    OPC_E, 100,
-    OPC_TEST_DIST, 50, # a distance test
-    OPC_SE, 2, OPC_S, 2, OPC_SW, 2,
-    OPC_W, 100, OPC_END, 0
-}
-
-patterns = { pattern_1, pattern_2, pattern_3, pattern_4 }
-
-curr_pattern = None
 
 class Game:
+    opcode = 0
+    operand = 0 
+    worm_ip = 0
+    worm_counter = 0 
+    worm_pattern_index = 0
+    worm_xv = 0
+    worm_yv = 0
+
+    pattern_5 = [
+        OPC_TRACKING_EVASIVE, 10,
+        OPC_N, 100,
+        OPC_TRACKING_EVASIVE, 20,
+        OPC_E, 110,
+        OPC_TRACKING_EVASIVE, 30,
+        OPC_S, 70,
+        OPC_TRACKING_EVASIVE, 40,
+        OPC_W, 60,
+        OPC_TRACKING_EVASIVE, 50,
+        OPC_END, 0
+    ]
+
+    pattern_6 = [
+        OPC_TRACKING_EVASIVE, 10,
+        OPC_S, 100,
+        OPC_TRACKING_EVASIVE, 20,
+        OPC_SE, 110,
+        OPC_TRACKING_EVASIVE, 30,
+        OPC_E, 120,
+        OPC_TRACKING_EVASIVE, 40,
+        OPC_S, 50,
+        OPC_TRACKING_EVASIVE, 50,
+        OPC_RAND, 10,
+        OPC_TRACKING_EVASIVE, 60,
+        OPC_RAND, 5,
+        OPC_TRACKING_EVASIVE, 10,
+        OPC_END, 0
+    ]
+
+    pattern_7 = [
+        OPC_TRACKING_EVASIVE, 10,
+        OPC_NW, 100,
+        OPC_TRACKING_EVASIVE, 20,
+        OPC_N, 110,
+        OPC_TRACKING_EVASIVE, 30,
+        OPC_NE, 60,
+        OPC_TRACKING_EVASIVE, 40,
+        OPC_SE, 40,
+        OPC_TRACKING_EVASIVE, 50,
+        OPC_RAND, 4,
+        OPC_TRACKING_EVASIVE, 60,
+        OPC_RAND, 3,
+        OPC_TRACKING_EVASIVE, 10,
+        OPC_E, 60,
+        OPC_TRACKING_EVASIVE, 20,
+        OPC_END, 0
+    ]
+
+    pattern_8 = [
+        OPC_TRACKING_EVASIVE, 10,
+        OPC_E, 100,
+        OPC_TRACKING_EVASIVE, 20,
+        OPC_S, 100,
+        OPC_TRACKING_EVASIVE, 30,
+        OPC_SW, 100,
+        OPC_TRACKING_EVASIVE, 20,
+        OPC_W, 50,
+        OPC_TRACKING_EVASIVE, 30,
+        OPC_RAND, 4,
+        OPC_TRACKING_EVASIVE, 10,
+        OPC_RAND, 3,
+        OPC_TRACKING_EVASIVE, 50,
+        OPC_S, 100,
+        OPC_TRACKING_EVASIVE, 10,
+        OPC_END, 0
+    ]
+
+    patterns = [pattern_5, pattern_6, pattern_7, pattern_8]
+
+    curr_pattern = None
     def __init__(self):
         #setup
         pygame.init()
         self.display_surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-        pygame.display.set_caption("AntiTrackingAI by Christian Rafael")
+        pygame.display.set_caption("AntiTrackingAI by Christian ZeroBit")
         self.clock = pygame.time.Clock()
         self.active = True
 
@@ -126,72 +108,133 @@ class Game:
         #text
         self.font = pygame.font.Font('graphics/fonts/NiseSegaSonic.ttf', 30)
         self.start_offset = 0
+    def worm_ai(self):
+        WEST_BIT  = 1
+        EAST_BIT  = 2
+        NORTH_BIT = 4
+        SOUTH_BIT = 8
 
-        self.music = pygame.mixer.Sound('sounds/roving_mars.mp3')
-        #self.music.play(loops = -1)
+        if (self.curr_pattern == None):
+            self.skelaton_pattern_index = random.randint(0,len(self.patterns)-1)
+            self.curr_pattern = self.patterns[self.skelaton_pattern_index]
+            self.worm_ip      = 0
+            self.worm_counter = 0
+        if (self.worm_counter <= 0):
+            opcode  = self.curr_pattern[self.worm_ip]
+            self.worm_ip +=1
+            operand = self.curr_pattern[self.worm_ip]
+            self.worm_ip +=1
 
-        #self.gameover_sound = pygame.mixer.Sound('sounds/game_over.mp3')
-    def worm_ai(self, move_factor):
-        old_worm_pos = self.worm.pos.copy()
-        if ((abs(self.worm.pos.x - self.fish.pos.x) + abs(self.worm.pos.y - self.fish.pos.y)) < 300):
-            if (self.fish.pos.x < self.worm.pos.x):
+            if opcode == OPC_E:
+                self.worm_xv = 3
+                self.worm_yv = 0
                 self.worm.direction = 180
-                self.worm.pos.x += move_factor
-                self.worm.rect.x = round(self.worm.pos.x)
-            elif (self.fish.pos.x > self.worm.pos.x):
-                self.worm.direction = 0
-                self.worm.pos.x -= move_factor
-                self.worm.rect.x = round(self.worm.pos.x)
-
-            if (self.fish.pos.y < self.worm.pos.y):
-                #self.worm.direction = 80
-                self.worm.pos.y += move_factor
-                self.worm.rect.y = round(self.worm.pos.y)
-            elif (self.fish.pos.y > self.worm.pos.y):
-                #self.worm.direction = -80
-                self.worm.pos.y -= move_factor
-                self.worm.rect.y = round(self.worm.pos.y)
-        else:
-            if (WINDOW_WIDTH/2 > self.worm.pos.x):
-                self.worm.direction = 180
-                self.worm.pos.x += move_factor
-                self.worm.rect.x = round(self.worm.pos.x)
-            elif (WINDOW_WIDTH/2 < self.worm.pos.x):
-                self.worm.direction = 0
-                self.worm.pos.x -= move_factor
-                self.worm.rect.x = round(self.worm.pos.x)
-
-            if (WINDOW_HEIGHT/2 > self.worm.pos.y):
-                self.worm.direction = 80
-                self.worm.pos.y += move_factor
-                self.worm.rect.y = round(self.worm.pos.y)
-            elif (WINDOW_HEIGHT/2 < self.worm.pos.y):
+                self.worm_counter = operand
+            elif opcode == OPC_NE:
+                self.worm_xv = 3
+                self.worm_yv = -3
                 self.worm.direction = -80
-                self.worm.pos.y -= move_factor
-                self.worm.rect.y = round(self.worm.pos.y)
-    def fish_ai(self, delta_time):
-        tv_vector = pygame.Vector2()
-        tv_vector.xy = (self.worm.pos.x - self.fish.pos.x, self.worm.pos.y - self.fish.pos.y)
-        tv = tv_vector.xy / tv_vector.length()
+                self.worm_counter = operand
+            elif opcode == OPC_N:
+                self.worm_xv = 0
+                self.worm_yv = -3
+                self.worm.direction = -80
+                self.worm_counter = operand
+            elif opcode == OPC_NW:
+                self.worm_xv = -3
+                self.worm_yv = -3
+                self.worm.direction = -80
+                self.worm_counter = operand
+            elif opcode == OPC_W:
+                self.worm_xv = -3
+                self.worm_yv = 0
+                self.worm.direction = 0
+                self.worm_counter = operand
+            elif opcode == OPC_SW:
+                self.worm_xv = -3
+                self.worm_yv = 3
+                self.worm.direction = 80
+                self.worm_counter = operand
+            elif opcode == OPC_S:
+                self.worm_xv = 0
+                self.worm_yv = 3
+                self.worm.direction = 80
+                self.worm_counter = operand
+            elif opcode == OPC_SE:
+                self.worm_xv = 3
+                self.worm_yv = 3
+                self.worm.direction = 80
+                self.worm_counter = operand
+            elif opcode == OPC_STOP:
+                self.worm_xv = 0
+                self.worm_yv = 0
+                self.worm_counter = operand
+            elif opcode == OPC_RAND:
+                self.worm_counter = 0
+            elif opcode == OPC_TRACKING_EVASIVE:
+                if abs(self.worm.pos.x - self.fish.pos.x) + abs(self.worm.pos.y - self.fish.pos.y) < 350:
+                    direction = 0
 
-        old_fish_pos = self.fish.pos.copy()
-        if (self.worm.pos.x > self.fish.pos.x):
-            self.fish.direction = 180
-            self.fish.pos.x += WORM_TRACKING_RATE * tv_vector.x * delta_time
-            self.fish.rect.x = round(self.fish.pos.x)
-        elif (self.worm.pos.x < self.fish.pos.x):
-            self.fish.direction = 0
-            self.fish.pos.x -= WORM_TRACKING_RATE * tv_vector.x * delta_time
-            self.fish.rect.x = round(self.fish.pos.x)
+                    if (self.fish.pos.x < self.worm.pos.x):
+                        direction |= EAST_BIT
+                    elif (self.fish.pos.x > self.worm.pos.x):
+                        direction |= WEST_BIT
+                    if (self.fish.pos.y < self.worm.pos.y):
+                        direction |= SOUTH_BIT
+                    elif (self.fish.pos.y > self.worm.pos.y):
+                        direction |= NORTH_BIT
 
-        if (self.worm.pos.y > self.fish.pos.y):
-            self.fish.direction = 80
-            self.fish.pos.y += WORM_TRACKING_RATE * tv_vector.y * delta_time
-            self.fish.rect.y = round(self.fish.pos.y)
-        elif (self.worm.pos.y < self.fish.pos.y):
-            self.fish.direction = -80
-            self.fish.pos.y -= WORM_TRACKING_RATE * tv_vector.y * delta_time
-            self.fish.rect.y = round(self.fish.pos.y)
+                    if (direction == WEST_BIT):
+                        self.worm_xv = -3
+                        self.worm_yv = 0
+                        self.worm.direction = 0
+                        self.worm_counter = operand
+                    elif (direction == EAST_BIT):
+                        self.worm_xv = 3
+                        self.worm_yv = 0
+                        self.worm.direction = 180
+                        self.worm_counter = operand
+                    elif (direction == NORTH_BIT):
+                        self.worm_xv = 0
+                        self.worm_yv = -3
+                        self.worm.direction = -80
+                        self.worm_counter = operand
+                    elif (direction == SOUTH_BIT):
+                        self.worm_xv = 0
+                        self.worm_yv = 3
+                        self.worm.direction = 80
+                        self.worm_counter = operand
+                    elif (direction == NORTH_BIT | WEST_BIT):
+                        self.worm_xv = -3
+                        self.worm_yv = -3
+                        self.worm.direction = -80
+                        self.worm_counter = operand
+                    elif (direction == NORTH_BIT | EAST_BIT):
+                        self.worm_xv = 3
+                        self.worm_yv = -3
+                        self.worm.direction = -80
+                        self.worm_counter = operand
+                    elif (direction == SOUTH_BIT | WEST_BIT):
+                        self.worm_xv = -3
+                        self.worm_yv = 3
+                        self.worm.direction = 80
+                        self.worm_counter = operand
+                    elif (direction == SOUTH_BIT | EAST_BIT):
+                        self.worm_xv = 3
+                        self.worm_yv = 3
+                        self.worm.direction = 80
+                        self.worm_counter = operand
+                self.worm_counter = operand
+            elif opcode == OPC_END:
+                self.worm_xv = 0
+                self.worm_yv = 0
+                self.skelaton_pattern_index = random.randint(0,len(self.patterns)-1)
+                self.curr_pattern = self.patterns[self.skelaton_pattern_index]
+                self.worm_ip = 0
+                self.worm_counter = 0
+
+        self.worm_counter -= 1
+
     def run(self):
         last_time = time.time()
         pygame.key.set_repeat(1,10)
@@ -200,8 +243,7 @@ class Game:
             dt = time.time() - last_time
             last_time = time.time()
 
-            worm_speed = 100 * dt + random.random() % 9
-            fish_speed = 100 * dt + random.random() % 9
+            fish_speed = 200 * dt
 
             # event loop
             for event in pygame.event.get():
@@ -218,8 +260,12 @@ class Game:
                     elif event.key == pygame.K_LEFT:
                         self.fish.left(fish_speed)
 
-            self.worm_ai(worm_speed)
-            #self.fish_ai(dt)
+            self.worm_ai()
+            self.worm.pos.x += 50 * self.worm_xv * dt
+            self.worm.rect.x = round(self.worm.pos.x)
+            self.worm.pos.y += 50 * self.worm_yv * dt
+            self.worm.rect.y = round(self.worm.pos.y)
+
             # game logic
             self.display_surface.fill('black')
             self.all_sprites.update(dt)

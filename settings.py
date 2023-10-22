@@ -13,9 +13,13 @@ OPC_SW              = 5 # move southwest
 OPC_S               = 6 # move south
 OPC_SE              = 7 # move southeast
 
-OPC_STOP            = 8  # stop for a moment
-OPC_RAND            = 9  # select a random direction
-OPC_TEST_DIST       = 10 # test distance
-OPC_END             = -1 # end pattern
+OPC_STOP             = 8  # stop for a moment
+OPC_RAND             = 9  # select a random direction
+OPC_TEST_DIST        = 10 # test distance
+OPC_TRACKING_EVASIVE = 11 # track fish evasive
+OPC_END              = -1 # end pattern
 
 MIN_LONELYNESS      = 100
+
+MAX_CLIP_X = WINDOW_WIDTH - 1;
+MAX_CLIP_Y = WINDOW_HEIGHT - 1;
